@@ -2,99 +2,95 @@ from ollama import chat, ChatResponse
 from schema import agent_schema
 from agents.inventory import inventory_agent
 from agents.conversation import conversation_agent
+from agents.fullfilment import fulfillment_agent
+from agents.recommendation import recommendation_agent
+from schema.system_prompt import SYSTEM_PROMPT
 import json
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-import time
-from agents.ollama_result import ollama_result
 
 app = FastAPI()
-system_prompt = """
-You are an intelligent and polite customer support + inventory assistant for a car service network across India.
 
-You have access to TWO specialized tools:
-
-1. **inventory_agent**
-   - Use ONLY when the user asks about:
-     • Car parts, their availability, stock, price, or quantity
-     • Which service centers have a particular part
-     • Listing or showing *all* service centers and their inventories
-   - Example triggers:
-     "Do you have engine oil?"
-     "Where can I get brake pads?"
-     "Show all service centers"
-     "List every center across India"
-     "What are all service centers?"
-
-2. **skip_agent**
-   - Use ONLY when the user's query is NOT related to inventory or service center data.
-   - Examples:
-     "Hey, how are you?"
-     "Tell me about your car services"
-     "What’s your working time?"
-     "What’s the best car oil to use?"
-
-Behavior Rules:
-────────────────────────────────────────────
-1. If user asks to **list, show, or get all service centers**, use `inventory_agent` with `action = "fetch_all"`.
-2. For normal or non-inventory questions, use the `skip_agent` to handle the message normally.
-3. Never mention databases, MongoDB, or internal logic.
-4. Always respond naturally like a helpful support executive.
-5. If unsure — prefer using **inventory_agent** instead of skipping.
-
-Response Style:
-────────────────────────────────────────────
-Friendly, concise, professional. Keep it conversational but useful.
-"""
-
+# ✅ Registered tools
 available_functions = { 
     'inventory_agent_function': inventory_agent,
     'conversational_agent_function': conversation_agent,
-
+    'fulfillment_agent_function' : fulfillment_agent,
+    "recommendation_agent_function" : recommendation_agent
 }
 
-tools = [agent_schema.inventory_agent_tool, agent_schema.conversational_agent_tool]
+# ✅ Contexts (structured and filtered)
+master_context = {'conversation': []}
+tools = [agent_schema.inventory_agent_tool, agent_schema.conversational_agent_tool, agent_schema.fulfillment_agent_tool, agent_schema.recommendation_agent_tool]
 OLLAMA_MODEL = "llama3.2"
-# query = input("Enter your query")
-# message = [
-#     {'role':'system', 'content':system_prompt},
-#     {'role':'user', 'content':query},
-# ]
+
+def clean_context():
+    """Return only user and assistant messages for context."""
+    return [
+        {"role": msg["role"], "content": msg["content"]}
+        for msg in master_context["conversation"]
+        if msg.get("role") in ("user", "assistant")
+    ]
+
 
 def ollama_chat():
-    try:
-        print("trgfdgtf")
-        query = "show me availablility of engine oil"
-        message = [
-            {'role':'system', 'content':system_prompt},
-            {'role':'user', 'content':query},
-        ]
+    while True:
+        try:
+            query = input("Enter query: ").strip()
+            if not query:
+                continue
 
-        response: ChatResponse = chat(model= OLLAMA_MODEL, messages= message, tools=tools)
-        # return response
-    except Exception as error:
-        print("Error", error)
-        
+            # ✅ Add only user message to context
+            master_context["conversation"].append({"role": "user", "content": query})
 
-    if response.message.tool_calls:
-        for tool in  response.message.tool_calls:
-            func_name = tool.function.name
-            args = tool.function.arguments  # already a dict, no json.loads() needed!
+            messages = [{"role": "system", "content": SYSTEM_PROMPT}] + clean_context()
+            response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages, tools=tools)
 
-            func = available_functions.get(func_name)
-            if func:
-                print(f"⚙️ Calling function: {func_name} with args: {args}")
-                yield json.dumps(
-                    {func_name:"fdfdvfdbvf"}
-                )
-                result = func(**args)  # call dynamically with unpacked arguments
-                print("✅ Function result:", result)
-                yield json.dumps(result)
-                
-            else:
-                print(f"Unknown function: {func_name}")
-    else:
-        print("💬 Assistant:", response.message.content)
+        except Exception as error:
+            print("❌ Error:", error)
+            continue
+
+        if response.message.tool_calls:
+            # ✅ Tool call handling
+            for tool in response.message.tool_calls:
+                func_name = tool.function.name
+                args = tool.function.arguments
+                func = available_functions.get(func_name)
+
+                if not func:
+                    print(f"❌ Unknown tool: {func_name}")
+                    continue
+
+                print(f"⚙️ Executing {func_name} with args: {args}")
+                yield json.dumps({func_name: "Tool execution started..."})
+
+                result = func(**args)
+                if hasattr(result, '__iter__') and not isinstance(result, (str, dict, list)):
+                    collected = ""
+                    for chunk in result:
+                        collected += chunk
+                        yield chunk
+                    tool_output = collected
+                else:
+                    tool_output = result
+                    yield json.dumps(result)
+
+                # ✅ Append only clean summary of tool result
+                master_context["conversation"].append({
+                    "role": "assistant",
+                    "content": f"Tool {func_name} executed successfully. Result summary: {str(tool_output)[:300]}"
+                })
+
+                # ✅ Let conversational agent respond to the result naturally
+                if func_name != "conversational_agent_function":
+                    for chunk in conversation_agent(context_message=tool_output):
+                        yield chunk
+
+        else:
+            # ✅ Normal chat (no tool call)
+            content = response.message.content.strip()
+            master_context["conversation"].append({"role": "assistant", "content": content})
+            yield json.dumps({"response": content})
 
 
 @app.get("/stream")
