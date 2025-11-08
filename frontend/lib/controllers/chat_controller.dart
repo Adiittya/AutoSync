@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
+import 'package:frontend/ui/chatbot/widgets/global_action_card.dart';
 import 'package:get/get.dart';
 import '../models/message_model.dart';
 import '../services/chat_service.dart';
@@ -81,7 +82,8 @@ class ChatController extends GetxController {
 
     // Add placeholder assistant response
     messages.add(Message(text: "", isUser: false));
-    _streamResponse(text);
+    // _streamResponse(text);
+    _simulateResponse(text);
   }
 
   void _streamResponse(String prompt) async {
@@ -195,55 +197,109 @@ class ChatController extends GetxController {
         );
   }
 
-  /// Streams AI response (simulated)
-  // void _streamResponse(String prompt) async {
-  //   isLoading.value = true;
+  /// Simulates a chatbot response locally for demo/testing
+  void _simulateResponse(String prompt) async {
+    isLoading.value = true;
+    final lastIndex = messages.length - 1;
 
-  //   _streamSub = chatService
-  //       .streamResponse(prompt)
-  //       .listen(
-  //         (partial) {
-  //           messages[messages.length - 1] = Message(
-  //             text: partial,
-  //             isUser: false,
-  //             type: MessageType.text,
-  //           );
-  //           messages.refresh();
-  //         },
-  //         onDone: () {
-  //           isLoading.value = false;
+    // final simulatedResponses = [
+    //   "Sure! Let me check that for you...",
+    //   "Alright, I found a few options based on your request.",
+    //   "Here’s what I can do for you 👇",
+    // ];
 
-  //           // Add dynamic follow-up widgets
-  //           // if (prompt.toLowerCase().contains("book")) {
-  //           //   messages.add(
-  //           //     Message(
-  //           //       text: "",
-  //           //       isUser: false,
-  //           //       type: MessageType.booking,
-  //           //       metadata: {"service": "Car Wash"},
-  //           //     ),
-  //           //   );
-  //           // } else if (prompt.toLowerCase().contains("rate")) {
-  //           //   messages.add(
-  //           //     Message(text: "", isUser: false, type: MessageType.rating),
-  //           //   );
-  //           // } else if (prompt.toLowerCase().contains("schedule")) {
-  //           //   messages.add(
-  //           //     Message(
-  //           //       text: "",
-  //           //       isUser: false,
-  //           //       type: MessageType.suggestion,
-  //           //       metadata: {
-  //           //         "options": ["Yes", "No", "Remind Me Later"],
-  //           //       },
-  //           //     ),
-  //           //   );
-  //           // }
+    // for (final chunk in simulatedResponses) {
+    //   await Future.delayed(const Duration(milliseconds: 700));
+    //   messages[lastIndex] = Message(
+    //     text: messages[lastIndex].text + "\n$chunk",
+    //     isUser: false,
+    //   );
+    //   messages.refresh();
+    // }
 
-  //           messages.refresh();
-  //         },
-  //       );
-  // }
+    await Future.delayed(const Duration(seconds: 1));
+    isLoading.value = false;
+
+    final lowerPrompt = prompt.toLowerCase();
+
+    // --- Inline widget messages ---
+    messages.add(
+      Message(
+        text: "",
+        isUser: false,
+        type: MessageType.payment,
+        metadata: {"center_name": "Volks Auto Service Mumbai"},
+      ),
+    );
+    // if (lowerPrompt.contains("pay")) {
+    //   messages.add(
+    //     Message(
+    //       text: "",
+    //       isUser: false,
+    //       type: MessageType.payment,
+    //       metadata: {
+    //         "amount": 299.0,
+    //         "description": "Service Payment for Car Wash",
+    //       },
+    //     ),
+    //   );
+    // } else if (lowerPrompt.contains("book") ||
+    //     lowerPrompt.contains("schedule")) {
+    //   messages.add(
+    //     Message(
+    //       text: "",
+    //       isUser: false,
+    //       type: MessageType.booking,
+    //       metadata: {
+    //         "service": "Car Wash",
+    //         "date": "2025-11-10",
+    //         "time": "10:00 AM",
+    //       },
+    //     ),
+    //   );
+    // } else if (lowerPrompt.contains("location") ||
+    //     lowerPrompt.contains("where") ||
+    //     lowerPrompt.contains("nearby")) {
+    //   messages.add(
+    //     Message(
+    //       text: "",
+    //       isUser: false,
+    //       type: MessageType.map,
+    //       metadata: {
+    //         "title": "Mumbai Service Center",
+    //         "lat": 19.0760,
+    //         "lng": 72.8777,
+    //       },
+    //     ),
+    //   );
+    // } else if (lowerPrompt.contains("feedback") ||
+    //     lowerPrompt.contains("rate")) {
+    //   messages.add(
+    //     Message(
+    //       text: "",
+    //       isUser: false,
+    //       type: MessageType.feedback,
+    //       metadata: {"question": "Was this service helpful?"},
+    //     ),
+    //   );
+    // } else if (lowerPrompt.contains("track") ||
+    //     lowerPrompt.contains("delivery")) {
+    //   messages.add(
+    //     Message(
+    //       text: "",
+    //       isUser: false,
+    //       type: MessageType.delivery,
+    //       metadata: {
+    //         "status": "Out for Delivery",
+    //         "eta": "25 mins",
+    //         "trackingUrl": "https://example.com/track123",
+    //       },
+    //     ),
+    //   );
+    // }
+
+    messages.refresh();
+  }
 
   /// Triggered when user taps on widget replies
   void addUserReply(String text) {

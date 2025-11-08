@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontend/ui/chatbot/widgets/global_action_card.dart';
 import 'package:open_filex/open_filex.dart';
 import '../../../models/message_model.dart';
 
@@ -73,19 +74,8 @@ class _ChatBubbleState extends State<ChatBubble>
 
     final bubbleColor = isUser ? Colors.blue[50] : Colors.grey[200];
 
-    Widget content;
-    switch (msg.type) {
-      case MessageType.file:
-        content = _buildFileBubble(context);
-        break;
-      default:
-        content = Text(
-          msg.text,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-          softWrap: true, // allow wrapping
-          overflow: TextOverflow.visible, // prevent overflow
-        );
-    }
+    // ✅ Only show action cards for agent messages, not user
+    Widget content = _buildBubbleContent(context, msg, isUser);
 
     return SlideTransition(
       position: _slide,
@@ -139,7 +129,36 @@ class _ChatBubbleState extends State<ChatBubble>
     );
   }
 
-  // ----------- FILE ----------
+  // --- Dynamic Bubble Content ---
+  Widget _buildBubbleContent(BuildContext context, Message msg, bool isUser) {
+    // ✅ File bubbles work for both
+    if (msg.type == MessageType.file) {
+      return _buildFileBubble(context);
+    }
+
+    // ✅ Action cards appear only for agent
+    if (!isUser &&
+        {
+          MessageType.payment,
+          MessageType.booking,
+          MessageType.map,
+          MessageType.feedback,
+          MessageType.delivery,
+          MessageType.buttons,
+          MessageType.inventory
+        }.contains(msg.type)) {
+      return GlobalActionCards.build(msg, widget.onUserAction);
+    }
+
+    // ✅ Fallback: simple text
+    return Text(
+      msg.text,
+      style: const TextStyle(fontSize: 14, color: Colors.black87),
+      softWrap: true,
+    );
+  }
+
+  // -------- FILE ----------
   Widget _buildFileBubble(BuildContext context) {
     final name = widget.message.metadata?['name'] ?? 'Unknown File';
     final path = widget.message.metadata?['path'];
@@ -186,6 +205,4 @@ class _ChatBubbleState extends State<ChatBubble>
       ),
     );
   }
-
-  // ----------- BOOKING ----------
 }

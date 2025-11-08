@@ -24,8 +24,8 @@ class CustomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 20),
+      padding: padding ?? const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 20, right: 1, left: 1),
       decoration: BoxDecoration(
         color: color,
         boxShadow: [
@@ -70,12 +70,8 @@ class CustomCard extends StatelessWidget {
                         ),
                   ),
                 const SizedBox(width: 8),
-               if (showIcon == true) 
-                Icon(
-                  Icons.settings,
-                  size: 16,
-                  color: Colors.black87,
-                ),
+                if (showIcon == true)
+                  Icon(Icons.settings, size: 16, color: Colors.black87),
                 Spacer(),
                 if (showDetails == true) ...[
                   Text(

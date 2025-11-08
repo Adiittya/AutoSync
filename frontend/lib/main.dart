@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/bindings/chat_binding.dart';
 import 'package:frontend/ui/chatbot/chat_page.dart';
+import 'package:frontend/ui/chatbot/widgets/global_action_card.dart';
 import 'package:frontend/ui/home/home_page.dart';
 import 'package:frontend/ui/root.dart';
 import 'package:get/get.dart';

@@ -41,6 +41,15 @@ class Header extends StatelessWidget {
               : Text(title, style: AppTheme.mainTitle),
         ),
         const Spacer(),
+
+        useMarquee
+            ? const FaIcon(
+                FontAwesomeIcons.arrowRightArrowLeft,
+                size: 20,
+                color: Colors.black87,
+              )
+            : SizedBox.shrink(),
+        SizedBox(width: 20),
         const FaIcon(FontAwesomeIcons.bell, size: 20, color: Colors.black87),
       ],
     );

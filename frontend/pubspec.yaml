@@ -45,6 +45,10 @@ dependencies:
   open_filex: ^4.7.0
   flutter_map: ^8.2.2
   smooth_page_indicator: ^1.2.1
+  url_launcher: ^6.3.2
+  rfw: ^1.0.31
+  http: ^1.5.0
+  mongo_dart: ^0.10.5
 
 dev_dependencies:
   flutter_test:

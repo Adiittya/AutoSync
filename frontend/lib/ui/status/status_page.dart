@@ -80,7 +80,7 @@ class StatusPage extends StatelessWidget {
             //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             //     crossAxisAlignment: CrossAxisAlignment.center,
             //     children: [
-                  
+
             //       Column(
             //         children: [
             //           FaIcon(FontAwesomeIcons.powerOff),
@@ -88,7 +88,7 @@ class StatusPage extends StatelessWidget {
             //           Text("Off"),
             //         ],
             //       ),
-              
+
             //       VerticalDivider(width: 1, thickness: 1,),
             //       Column(
             //         children: [
@@ -106,24 +106,26 @@ class StatusPage extends StatelessWidget {
         CustomCard(
           title: "Vehicle Management",
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Vehicle Report",
-                  style: AppTheme.subtitle.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Vehicle Report",
+                    style: AppTheme.subtitle.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
 
-                Text(
-                  "Informs you of the regular vehicle inspections results",
-                  style: AppTheme.subtitle,
-                ),
-              ],
+                  Text(
+                    "Informs you of the regular vehicle inspections results",
+                    style: AppTheme.subtitle,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

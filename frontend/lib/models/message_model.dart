@@ -1,4 +1,4 @@
-enum MessageType { text, rating, booking, suggestion, file }
+enum MessageType { text, file, payment, booking, map, feedback, delivery, buttons, inventory }
 
 class Message {
   final String text;

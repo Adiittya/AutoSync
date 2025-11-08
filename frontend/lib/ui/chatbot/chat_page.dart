@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/ui/chatbot/widgets/global_action_card.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
@@ -153,7 +154,6 @@ class ChatPage extends GetView<ChatController> {
                 );
               }),
             ),
-
             // Input
             const InputBox(),
           ],
