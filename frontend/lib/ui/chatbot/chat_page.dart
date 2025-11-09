@@ -35,7 +35,7 @@ class ChatPage extends GetView<ChatController> {
                 Obx(
                   () => AgentStatusChip(
                     isActive: controller.agentActive.value,
-                    agentName: controller.currentAgent.value,
+                    agentName: controller.currentAgent.value.replaceAll("_agent_function", ""),
                   ),
                 ),
                 const Spacer(),

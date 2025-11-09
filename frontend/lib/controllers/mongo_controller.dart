@@ -32,7 +32,7 @@ class MongoController extends GetxController {
       ).toList();
 
       bookings.assignAll(data);
-      print('Fetched bookings: $data');
+
     } catch (e) {
       print('Error fetching bookings: $e');
     }
