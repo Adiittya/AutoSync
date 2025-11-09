@@ -19,8 +19,12 @@ available_functions = {
     'recommendation_agent_function': recommendation_agent
 }
 
-# ✅ Context (only latest conversation)
-master_context = {'conversation': []}
+# ✅ Context memory
+master_context = {
+    'conversation': [],
+    'last_part': None   # <-- keeps track of last mentioned car part
+}
+
 tools = [
     agent_schema.inventory_agent_tool,
     agent_schema.conversational_agent_tool,
@@ -34,25 +38,28 @@ def ollama_chat(user_query):
     try:
         query = user_query.strip()
         if not query:
-            yield json.dumps({"agent_name": "system"})
-            yield json.dumps({"tool_output": None})
             yield json.dumps({"ollama_output": "No query provided."})
             return
 
-        # ⚡ Reset context — keep only the latest query
-        master_context["conversation"].clear()
+        # ⚡ Keep context — don’t clear conversation
         master_context["conversation"].append({"role": "user", "content": query})
+
+        # ✅ Use last part name for reference if user says “same” or “it”
+        if any(word in query.lower() for word in ["same", "it", "that"]):
+            if master_context.get("last_part"):
+                query = query.replace("same", master_context["last_part"])
+                query = query.replace("it", master_context["last_part"])
+                query = query.replace("that", master_context["last_part"])
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + master_context["conversation"]
         response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages, tools=tools, think=False)
 
     except Exception as error:
-        yield json.dumps({"agent_name": "system"})
-        yield json.dumps({"tool_output": None})
         yield json.dumps({"ollama_output": f"Error: {error}"})
         return
 
     # ------------------ TOOL CALLS ------------------
+# ------------------ TOOL CALLS ------------------
     print(response.message.tool_calls)
     if response.message.tool_calls:
         for tool in response.message.tool_calls:
@@ -62,80 +69,66 @@ def ollama_chat(user_query):
             print(f"func_name:{func_name} and args:{args}")
 
             if not func:
-                yield json.dumps({"agent_name": "system"})
-                yield json.dumps({"tool_output": None})
                 yield json.dumps({"ollama_output": f"Unknown tool: {func_name}"})
                 continue
 
-            # 1️⃣ Yield agent name
+            # 1️⃣ Yield agent name first
             yield json.dumps({"agent_name": func_name})
 
-            # 2️⃣ Execute tool and yield output
-            result = None
-            if func_name in ["inventory_agent_function", "fulfillment_agent_function"]:
-                result = func(**args)
-                yield json.dumps({"tool_output": result})
+            # 🧩 CASE 1: Conversational or Recommendation Agent
+            if func_name in ["conversational_agent_function", "recommendation_agent_function"]:
+                # These shouldn’t have tool_output
+                func(**args)
+                yield json.dumps({"tool_output": None})
 
-                # ⚡ Get conversational follow-up from Ollama
+                # Generate quick natural reply from Ollama
                 messages = [
-                    {"role": "system", "content":
-                         "You are an AI assistant for a car service platform. "
-                        "Your role is to read the tool output and the user’s query, "
-                        "then provide a short, direct, and natural reply that answers the query using the data provided. "
-                        "Focus only on relevant information — do not restate the entire data. "
-                        "Always keep responses concise and conversational (one or two sentences). "
-                        "If appropriate, include a natural follow-up question to keep the conversation going. "
-                        "Avoid bullet points, formatting, or explanations."
-                    },
-                    {"role": "user", "content": query},
-                    {"role": "tool", "content": json.dumps(result)}  # ✅ FIXED
+                    {"role": "system", "content": 
+                        "You are a friendly car service assistant. Reply naturally and briefly to the user query."},
+                    {"role": "user", "content": query}
                 ]
                 followup_response = chat(model=OLLAMA_MODEL, messages=messages)
                 followup_text = followup_response.message.content.strip() if followup_response.message.content else ""
-                print("✅ Ollama follow-up generated:", followup_text)
                 yield json.dumps({"ollama_output": followup_text})
 
-                master_context["conversation"] = [
-                    {"role": "user", "content": query},
-                    {"role": "assistant", "content": followup_text}
-                ]
-            
+                master_context["conversation"].append({"role": "assistant", "content": followup_text})
                 return
 
-
-
-            elif func_name in ["conversational_agent_function", "recommendation_agent_function"]:
-                result = func(**args)
-                yield json.dumps({"tool_output": None})
-
-            # ✅ Handle generator output properly
-            final_text = ""
+            # 🧩 CASE 2: Inventory or Fulfillment Agent
+            result = func(**args)
             if hasattr(result, "__iter__") and not isinstance(result, (str, dict, list)):
-                for chunk in result:
-                    final_text += str(chunk)
-                    yield json.dumps({"ollama_output": chunk})
-            else:
-                final_text = str(result)
-                yield json.dumps({"ollama_output": final_text})
+                result = list(result)
 
-            # ✅ Save resolved text, not generator object
-            master_context["conversation"] = [
+            yield json.dumps({"tool_output": result})
+
+            # Track last mentioned part
+            if "part_name" in args and args["part_name"]:
+                master_context["last_part"] = args["part_name"]
+
+            # Generate short follow-up
+            messages = [
+                {"role": "system", "content":
+                    "You are an AI assistant for a car service platform. "
+                    "Use the tool output and the user query to give a short, clear, and natural reply. "
+                    "Focus only on the relevant info and add a follow-up question if appropriate."
+                },
                 {"role": "user", "content": query},
-                {"role": "assistant", "content": final_text}
+                {"role": "tool", "content": json.dumps(result)}
             ]
+            followup_response = chat(model=OLLAMA_MODEL, messages=messages)
+            followup_text = followup_response.message.content.strip() if followup_response.message.content else ""
+            print("✅ Ollama follow-up generated:", followup_text)
+            yield json.dumps({"ollama_output": followup_text})
 
+            master_context["conversation"].append({"role": "assistant", "content": followup_text})
+            return
 
-    # ------------------ NORMAL CHAT (no tool call) ------------------
     else:
-        yield json.dumps({"agent_name": "error"})
+        yield json.dumps({"agent_name": "none"})
+        yield json.dumps({"ollama_output": "I couldn’t find a tool to handle that request."})
 
 
 @app.get("/stream")
 def stream(user_query: str = Query(..., description="User query to send to Ollama")):
     print(master_context)
     return StreamingResponse(ollama_chat(user_query), media_type="text/event-stream")
-
-
-
-
-#dkdskdskvfdkmgfbgmfk
