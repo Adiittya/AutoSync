@@ -12,11 +12,11 @@ def ollama_result(messages: list):
         if chunk.message:
             yield chunk.message.content
             
-    
-# for token in ollama_result(
-#      messages = [
-#         {"role": "system", "content": "HELPFULL AI"},
-#         {"role": "user", "content": "Good boii"}
-#     ]
-# ):
-#     print(token, end="",flush= True)
+
+for token in ollama_result(
+     messages = [
+        {"role": "system", "content": "HELPFULL AI"},
+        {"role": "user", "content": "Good boii"}
+    ]
+):
+    print(token, end="",flush= True)

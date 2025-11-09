@@ -38,7 +38,7 @@ def ollama_chat(session_id: str):
     ]
 
     print("🚀 Sending message to Ollama:", user_query)
-    response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages, tools=tools)
+    response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages, tools=tools )
 
     if response.message.tool_calls:
         # STEP 1️⃣: MASTER DECIDES TOOL TO CALL

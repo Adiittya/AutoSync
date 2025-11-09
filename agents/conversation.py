@@ -13,17 +13,19 @@ def conversation_agent(user_query: str = None, context_message=None):
     Chooses the right system prompt automatically based on context type.
     """
 
-    # ✅ Two prompt modes — auto-switched
     normal_prompt = """
-    You are a warm, friendly, and knowledgeable customer support assistant 
-    for a car service company in India.
-    - Speak naturally, like chatting with a real person.
-    - Keep answers short, clear, and professional.
-    - NEVER mention tools, JSON, databases, or system internals.
-    - Example: 
-      User: "What services do you offer?"
-      Assistant: "We offer full car servicing, oil changes, brake inspections, and more!"
-    """
+        You are a warm, friendly, and knowledgeable customer support assistant 
+        for a car service company in India. 
+
+        - Speak naturally, like chatting with a real person.
+        - Keep answers short, clear, and professional.
+        - Never mention tools, JSON, databases, or system internals.
+        - Example:
+            User: "What services do you offer?"
+            Assistant: "We provide full car servicing, oil changes, brake checks, and more!"
+
+        *** Keep all responses concise and to the point. Only upto 1 line ***
+        """
 
     context_prompt = """
     You are a polite, smart, and professional customer support assistant 
@@ -42,7 +44,7 @@ def conversation_agent(user_query: str = None, context_message=None):
     RAW DATA: {'city': 'Mumbai', 'parts': [{'part': 'Engine Oil', 'price': 700}]}
     REPLY: "Yes! Engine oil is available at our Mumbai service center for ₹700."
 
-    Keep tone friendly, confident, and clear.
+    Keep one line short tone friendly, confident, and clear.
     """
 
     # ✅ Detect which mode to use
@@ -66,7 +68,7 @@ def conversation_agent(user_query: str = None, context_message=None):
         messages.append({"role": "user", "content": user_query})
 
     try:
-        response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages)
+        response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages )
         yield response.message.content
     except Exception as e:
         print("❌ Error in conversation_agent:", e)

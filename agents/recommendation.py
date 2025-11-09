@@ -16,19 +16,19 @@ def recommendation_agent(user_query: str):
     vehicle_stats = user["vehicle"]["car_stats"]
 
     system_prompt = f"""
-    You are an AI car maintenance assistant. Analyze the following vehicle stats
-    and provide **concise, actionable recommendations** in **bullet points**.
-    
-    Requirements:
-    - First, list **Critical Alerts** (things that need immediate action or attention).
-    - Then, list **Other Tips** (important but not urgent).
-    - Maximum 5 bullets in total, prioritize urgent issues.
-    - Only include crucial maintenance items: oil, brakes, tires, engine, coolant, battery.
-    - Do not include greetings, explanations, or extra commentary.
-    
+    You are an AI car maintenance assistant.
+
+    Analyze the following vehicle stats and give a short, plain text response.
+
+    Focus only on the most critical maintenance issues that need immediate attention
+    (such as oil, brakes, tires, engine, coolant, or battery).
+
+    Do not include greetings, explanations, bullet points, or formatting — only direct, concise text.
+
     Vehicle Stats:
     {vehicle_stats}
     """
+
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -36,8 +36,8 @@ def recommendation_agent(user_query: str):
     ]
 
     try:
-        response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages)
-        return {"recommendations": response.message.content}
+        response: ChatResponse = chat(model=OLLAMA_MODEL, messages=messages )
+        return {response.message.content}
     except Exception as e:
         return {"error": str(e)}
 
