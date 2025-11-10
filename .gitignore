@@ -1,0 +1,6 @@
+# Flutter build files
+frontend/build/
+frontend/.dart_tool/
+*.apk
+*.so
+*.dill
