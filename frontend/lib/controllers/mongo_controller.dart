@@ -16,7 +16,7 @@ class MongoController extends GetxController {
 
   // Initialize MongoDB connection
   Future<void> initDb() async {
-    db = await Db.create('mongodb://10.0.2.2:27017/volks_db');
+    db = await Db.create('mongodb+srv://jainambarbhaya1509:<password>@vwdb.mlbuy86.mongodb.net/volks_db');
     await db.open();
     bookingsCollection = db.collection('bookings');
 
